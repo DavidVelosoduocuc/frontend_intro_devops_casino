@@ -21,18 +21,18 @@ export const rutas: Routes = [
   { path: '', redirectTo: 'lobby', pathMatch: 'full' },
 
   // Rutas públicas (sin sesión)
-  { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
+  { path: 'login',    loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   { path: 'register', loadComponent: () => import('./components/register/register.component').then(m => m.RegisterComponent) },
 
   // Rutas privadas (requieren JWT válido)
-  { path: 'lobby', canActivate: [authGuard], loadComponent: () => import('./components/lobby/lobby.component').then(m => m.LobbyComponent) },
-  { path: 'slots', canActivate: [authGuard], loadComponent: () => import('./components/slots/slots.component').then(m => m.SlotsComponent) },
-  { path: 'roulette', canActivate: [authGuard], loadComponent: () => import('./components/roulette/roulette.component').then(m => m.RouletteComponent) },
+  { path: 'lobby',     canActivate: [authGuard], loadComponent: () => import('./components/lobby/lobby.component').then(m => m.LobbyComponent) },
+  { path: 'slots',     canActivate: [authGuard], loadComponent: () => import('./components/slots/slots.component').then(m => m.SlotsComponent) },
+  { path: 'roulette',  canActivate: [authGuard], loadComponent: () => import('./components/roulette/roulette.component').then(m => m.RouletteComponent) },
   { path: 'blackjack', canActivate: [authGuard], loadComponent: () => import('./components/blackjack/blackjack.component').then(m => m.BlackjackComponent) },
-  { path: 'bonos', canActivate: [authGuard], loadComponent: () => import('./components/bonos/bonos.component').then(m => m.BonosComponent) },
-  { path: 'apuestas', canActivate: [authGuard], loadComponent: () => import('./components/apuestas/apuestas.component').then(m => m.ApuestasComponent) },
-  { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent) },
-  { path: 'history', canActivate: [authGuard], loadComponent: () => import('./components/history/history.component').then(m => m.HistoryComponent) },
+  { path: 'bonos',     canActivate: [authGuard], loadComponent: () => import('./components/bonos/bonos.component').then(m => m.BonosComponent) },
+  { path: 'apuestas',  canActivate: [authGuard], loadComponent: () => import('./components/apuestas/apuestas.component').then(m => m.ApuestasComponent) },
+  { path: 'profile',   canActivate: [authGuard], loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent) },
+  { path: 'history',   canActivate: [authGuard], loadComponent: () => import('./components/history/history.component').then(m => m.HistoryComponent) },
   { path: 'estadisticas', canActivate: [authGuard], loadComponent: () => import('./components/estadisticas/estadisticas.component').then(m => m.EstadisticasComponent) },
 
   // Cualquier ruta no reconocida → lobby
