@@ -1,27 +1,38 @@
 name: Deploy casino-frontend a EKS
-
 on:
   push:
     branches: [ deploy ]
   workflow_dispatch:
-
 env:
   AWS_REGION: us-east-1
   EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }}
   ECR_REPOSITORY: casino-frontend
-
 jobs:
-  build:
-    name: Build y Push a ECR
+  test:
+    name: Test unitarios (Karma/Jasmine)
     runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.set_tag.outputs.image_tag }}
-      registry: ${{ steps.ecr.outputs.registry }}
-
     steps:
       - name: 1. Descargar codigo
         uses: actions/checkout@v4
+      - name: 2. Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 3. Instalar dependencias
+        run: npm ci
+      - name: 4. Ejecutar tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless
 
+  build:
+    name: Build y Push a ECR
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+      registry: ${{ steps.ecr.outputs.registry }}
+    steps:
+      - name: 1. Descargar codigo
+        uses: actions/checkout@v4
       - name: 2. Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -29,15 +40,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: 3. Login en Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
-
       - name: 4. Definir tag de imagen
         id: set_tag
         run: echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-
       - name: 5. Build y Push con 3 tags
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -56,11 +64,9 @@ jobs:
     name: Deploy en EKS
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: 1. Descargar codigo
         uses: actions/checkout@v4
-
       - name: 2. Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -68,19 +74,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
-
       - name: 3. Login en Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
-
       - name: 4. Instalar kubectl
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
-
       - name: 5. Conectar kubectl al cluster
         run: aws eks update-kubeconfig --name "$EKS_CLUSTER" --region "$AWS_REGION"
-
       - name: 6. Actualizar imagen y aplicar manifiestos
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -90,7 +92,6 @@ jobs:
             casino-frontend="$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           kubectl apply -f k8s/service.yaml
           kubectl rollout status deployment/casino-frontend --timeout=180s
-
       - name: 7. Mostrar resultado final
         run: |
           kubectl get pods -l app=casino-frontend
